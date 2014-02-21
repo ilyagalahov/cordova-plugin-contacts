@@ -12,6 +12,7 @@
 	limitations under the License.
 */
 
+using System.Text;
 using Microsoft.Phone.Tasks;
 using Microsoft.Phone.UserData;
 using System;
@@ -22,6 +23,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Windows;
+using io.cordova.hellocordova.Plugins.org.apache.cordova.contacts;
 using DeviceContacts = Microsoft.Phone.UserData.Contacts;
 
 
@@ -34,6 +36,8 @@ namespace WPCordovaClassLib.Cordova.Commands
         public string filter { get; set; }
         [DataMember]
         public bool multiple { get; set; }
+        [DataMember]
+        public string[] desiredFields { get; set; }
     }
 
     [DataContract]
@@ -474,14 +478,14 @@ namespace WPCordovaClassLib.Cordova.Commands
                     foundContacts.AddRange(
                         from Contact con in e.Results
                         where con.CompleteName != null && (
-                            (con.CompleteName.FirstName != null     && culture.CompareInfo.IndexOf(con.CompleteName.FirstName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.LastName != null      && culture.CompareInfo.IndexOf(con.CompleteName.LastName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.MiddleName != null    && culture.CompareInfo.IndexOf(con.CompleteName.MiddleName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.Nickname != null      && culture.CompareInfo.IndexOf(con.CompleteName.Nickname, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.Suffix != null        && culture.CompareInfo.IndexOf(con.CompleteName.Suffix, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.Title != null         && culture.CompareInfo.IndexOf(con.CompleteName.Title, searchParams.options.filter, compare_option) >= 0) ||
+                            (con.CompleteName.FirstName != null && culture.CompareInfo.IndexOf(con.CompleteName.FirstName, searchParams.options.filter, compare_option) >= 0) ||
+                            (con.CompleteName.LastName != null && culture.CompareInfo.IndexOf(con.CompleteName.LastName, searchParams.options.filter, compare_option) >= 0) ||
+                            (con.CompleteName.MiddleName != null && culture.CompareInfo.IndexOf(con.CompleteName.MiddleName, searchParams.options.filter, compare_option) >= 0) ||
+                            (con.CompleteName.Nickname != null && culture.CompareInfo.IndexOf(con.CompleteName.Nickname, searchParams.options.filter, compare_option) >= 0) ||
+                            (con.CompleteName.Suffix != null && culture.CompareInfo.IndexOf(con.CompleteName.Suffix, searchParams.options.filter, compare_option) >= 0) ||
+                            (con.CompleteName.Title != null && culture.CompareInfo.IndexOf(con.CompleteName.Title, searchParams.options.filter, compare_option) >= 0) ||
                             (con.CompleteName.YomiFirstName != null && culture.CompareInfo.IndexOf(con.CompleteName.YomiFirstName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.YomiLastName != null  && culture.CompareInfo.IndexOf(con.CompleteName.YomiLastName, searchParams.options.filter, compare_option) >= 0))
+                            (con.CompleteName.YomiLastName != null && culture.CompareInfo.IndexOf(con.CompleteName.YomiLastName, searchParams.options.filter, compare_option) >= 0))
                         select con);
                 }
                 if (searchParams.fields.Contains("phoneNumbers"))
@@ -504,16 +508,14 @@ namespace WPCordovaClassLib.Cordova.Commands
                 foundContacts = new List<Contact>(e.Results);
             }
 
-            //List<string> contactList = new List<string>();
-
             string strResult = "";
 
             IEnumerable<Contact> distinctContacts = foundContacts.Distinct();
 
             foreach (Contact contact in distinctContacts)
             {
-                strResult += FormatJSONContact(contact, null) + ",";
-                //contactList.Add(FormatJSONContact(contact, null));
+                strResult += FormatJSONContact(contact, searchParams.options.desiredFields) + ",";
+                
                 if (!searchParams.options.multiple)
                 {
                     break; // just return the first item
@@ -522,172 +524,35 @@ namespace WPCordovaClassLib.Cordova.Commands
             PluginResult result = new PluginResult(PluginResult.Status.OK);
             result.Message = "[" + strResult.TrimEnd(',') + "]";
             DispatchCommandResult(result);
-
+            
         }
 
-        private string FormatJSONPhoneNumbers(Contact con)
+        private string FormatJSONContact(Contact contact, string[] desiredFields)
         {
-            string retVal = "";
-            string contactFieldFormat = "\"type\":\"{0}\",\"value\":\"{1}\",\"pref\":\"false\"";
-            foreach (ContactPhoneNumber number in con.PhoneNumbers)
+            var contactFieldsWithJsonVals = ContactsHelper.PopulateContactDictionary(contact);
+            if (desiredFields!=null && desiredFields.Any())
             {
-
-                string contactField = string.Format(contactFieldFormat,
-                                                    number.Kind.ToString(),
-                                                    number.PhoneNumber);
-
-                retVal += "{" + contactField + "},";
+                return fillResultWithFields(desiredFields,contactFieldsWithJsonVals);
             }
-            return retVal.TrimEnd(',');
+            return fillResultWithFields(contactFieldsWithJsonVals.Keys.ToArray(), contactFieldsWithJsonVals);
         }
 
-        private string FormatJSONEmails(Contact con)
+        private string fillResultWithFields(string[] desiredFields, Dictionary<String, String> contactFieldsWithJsonVals)
         {
-            string retVal = "";
-            string contactFieldFormat = "\"type\":\"{0}\",\"value\":\"{1}\",\"pref\":\"false\"";
-            foreach (ContactEmailAddress address in con.EmailAddresses)
+            
+            var result = new StringBuilder();
+            for (int i = 0; i < desiredFields.Count(); i++)
             {
-                string contactField = string.Format(contactFieldFormat,
-                                                    address.Kind.ToString(),
-                                                    EscapeJson(address.EmailAddress));
+                if (contactFieldsWithJsonVals.ContainsKey(desiredFields[i]))
+                {
 
-                retVal += "{" + contactField + "},";
+                    result.Append(contactFieldsWithJsonVals[desiredFields[i]]);
+                    if (i != desiredFields.Count() - 1)
+                        result.Append(",");
+                }
             }
-            return retVal.TrimEnd(',');
+            return "{" + result + "}";
         }
 
-        private string getFormattedJSONAddress(ContactAddress address, bool isPrefered)
-        {
-
-            string addressFormatString = "\"pref\":{0}," + // bool
-                          "\"type\":\"{1}\"," +
-                          "\"formatted\":\"{2}\"," +
-                          "\"streetAddress\":\"{3}\"," +
-                          "\"locality\":\"{4}\"," +
-                          "\"region\":\"{5}\"," +
-                          "\"postalCode\":\"{6}\"," +
-                          "\"country\":\"{7}\"";
-
-            string formattedAddress = EscapeJson(address.PhysicalAddress.AddressLine1 + " "
-                                    + address.PhysicalAddress.AddressLine2 + " "
-                                    + address.PhysicalAddress.City + " "
-                                    + address.PhysicalAddress.StateProvince + " "
-                                    + address.PhysicalAddress.CountryRegion + " "
-                                    + address.PhysicalAddress.PostalCode);
-
-            string jsonAddress = string.Format(addressFormatString,
-                                               isPrefered ? "\"true\"" : "\"false\"",
-                                               address.Kind.ToString(),
-                                               formattedAddress,
-                                               EscapeJson(address.PhysicalAddress.AddressLine1 + " " + address.PhysicalAddress.AddressLine2),
-                                               address.PhysicalAddress.City,
-                                               address.PhysicalAddress.StateProvince,
-                                               address.PhysicalAddress.PostalCode,
-                                               address.PhysicalAddress.CountryRegion);
-
-            //Debug.WriteLine("getFormattedJSONAddress returning :: " + jsonAddress);
-
-            return "{" + jsonAddress + "}";
-        }
-
-        private string FormatJSONAddresses(Contact con)
-        {
-            string retVal = "";
-            foreach (ContactAddress address in con.Addresses)
-            {
-                retVal += this.getFormattedJSONAddress(address, false) + ",";
-            }
-
-            //Debug.WriteLine("FormatJSONAddresses returning :: " + retVal);
-            return retVal.TrimEnd(',');
-        }
-
-        private string FormatJSONWebsites(Contact con)
-        {
-            string retVal = "";
-            foreach (string website in con.Websites)
-            {
-                retVal += "\"" + EscapeJson(website) + "\",";
-            }
-            return retVal.TrimEnd(',');
-        }
-
-        /*
-         *  formatted: The complete name of the contact. (DOMString)
-            familyName: The contacts family name. (DOMString)
-            givenName: The contacts given name. (DOMString)
-            middleName: The contacts middle name. (DOMString)
-            honorificPrefix: The contacts prefix (example Mr. or Dr.) (DOMString)
-            honorificSuffix: The contacts suffix (example Esq.). (DOMString)
-         */
-        private string FormatJSONName(Contact con)
-        {
-            string retVal = "";
-            string formatStr = "\"formatted\":\"{0}\"," +
-                                "\"familyName\":\"{1}\"," +
-                                "\"givenName\":\"{2}\"," +
-                                "\"middleName\":\"{3}\"," +
-                                "\"honorificPrefix\":\"{4}\"," +
-                                "\"honorificSuffix\":\"{5}\"";
-
-            if (con.CompleteName != null)
-            {
-                retVal = string.Format(formatStr,
-                                   EscapeJson(con.CompleteName.FirstName + " " + con.CompleteName.LastName), // TODO: does this need suffix? middlename?
-                                   EscapeJson(con.CompleteName.LastName),
-                                   EscapeJson(con.CompleteName.FirstName),
-                                   EscapeJson(con.CompleteName.MiddleName),
-                                   EscapeJson(con.CompleteName.Title),
-                                   EscapeJson(con.CompleteName.Suffix));
-            }
-            else
-            {
-                retVal = string.Format(formatStr,"","","","","","");
-            }
-
-            return "{" + retVal + "}";
-        }
-
-        private string FormatJSONContact(Contact con, string[] fields)
-        {
-
-            string contactFormatStr = "\"id\":\"{0}\"," +
-                                      "\"displayName\":\"{1}\"," +
-                                      "\"nickname\":\"{2}\"," +
-                                      "\"phoneNumbers\":[{3}]," +
-                                      "\"emails\":[{4}]," +
-                                      "\"addresses\":[{5}]," +
-                                      "\"urls\":[{6}]," +
-                                      "\"name\":{7}," +
-                                      "\"note\":\"{8}\"," +
-                                      "\"birthday\":\"{9}\"";
-
-
-            string jsonContact = String.Format(contactFormatStr,
-                                               con.GetHashCode(),
-                                               EscapeJson(con.DisplayName),
-                                               EscapeJson(con.CompleteName != null ? con.CompleteName.Nickname : ""),
-                                               FormatJSONPhoneNumbers(con),
-                                               FormatJSONEmails(con),
-                                               FormatJSONAddresses(con),
-                                               FormatJSONWebsites(con),
-                                               FormatJSONName(con),
-                                               EscapeJson(con.Notes.FirstOrDefault()),
-                                               EscapeJson(Convert.ToString(con.Birthdays.FirstOrDefault())));
-
-            return "{" + jsonContact + "}";
-
-        }
-
-        
-        private static string EscapeJson(string str)
-        {
-            if (String.IsNullOrEmpty(str))
-            {
-                return str;
-            }
-
-            return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t").Replace("\"", "\\\"").Replace("&", "\\&");
-        }
     }
 }
