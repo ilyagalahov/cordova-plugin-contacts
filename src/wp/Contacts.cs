@@ -16,14 +16,12 @@ using System.Text;
 using Microsoft.Phone.Tasks;
 using Microsoft.Phone.UserData;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Windows;
-using io.cordova.hellocordova.Plugins.org.apache.cordova.contacts;
 using DeviceContacts = Microsoft.Phone.UserData.Contacts;
 
 
@@ -34,8 +32,10 @@ namespace WPCordovaClassLib.Cordova.Commands
     {
         [DataMember]
         public string filter { get; set; }
+
         [DataMember]
         public bool multiple { get; set; }
+
         [DataMember]
         public string[] desiredFields { get; set; }
     }
@@ -45,6 +45,7 @@ namespace WPCordovaClassLib.Cordova.Commands
     {
         [DataMember]
         public string[] fields { get; set; }
+
         [DataMember]
         public SearchOptions options { get; set; }
     }
@@ -54,18 +55,25 @@ namespace WPCordovaClassLib.Cordova.Commands
     {
         [DataMember]
         public string formatted { get; set; }
+
         [DataMember]
         public string type { get; set; }
+
         [DataMember]
         public string streetAddress { get; set; }
+
         [DataMember]
         public string locality { get; set; }
+
         [DataMember]
         public string region { get; set; }
+
         [DataMember]
         public string postalCode { get; set; }
+
         [DataMember]
         public string country { get; set; }
+
         [DataMember]
         public bool pref { get; set; }
     }
@@ -75,14 +83,19 @@ namespace WPCordovaClassLib.Cordova.Commands
     {
         [DataMember]
         public string formatted { get; set; }
+
         [DataMember]
         public string familyName { get; set; }
+
         [DataMember]
         public string givenName { get; set; }
+
         [DataMember]
         public string middleName { get; set; }
+
         [DataMember]
         public string honorificPrefix { get; set; }
+
         [DataMember]
         public string honorificSuffix { get; set; }
     }
@@ -92,8 +105,10 @@ namespace WPCordovaClassLib.Cordova.Commands
     {
         [DataMember]
         public string type { get; set; }
+
         [DataMember]
         public string value { get; set; }
+
         [DataMember]
         public bool pref { get; set; }
     }
@@ -103,12 +118,16 @@ namespace WPCordovaClassLib.Cordova.Commands
     {
         [DataMember]
         public string type { get; set; }
+
         [DataMember]
         public string name { get; set; }
+
         [DataMember]
         public bool pref { get; set; }
+
         [DataMember]
         public string department { get; set; }
+
         [DataMember]
         public string title { get; set; }
     }
@@ -118,12 +137,16 @@ namespace WPCordovaClassLib.Cordova.Commands
     {
         [DataMember]
         public string id { get; set; }
+
         [DataMember]
         public string rawId { get; set; }
+
         [DataMember]
         public string displayName { get; set; }
+
         [DataMember]
         public string nickname { get; set; }
+
         [DataMember]
         public string note { get; set; }
 
@@ -158,7 +181,6 @@ namespace WPCordovaClassLib.Cordova.Commands
 
     public class Contacts : BaseCommand
     {
-
         public const int UNKNOWN_ERROR = 0;
         public const int INVALID_ARGUMENT_ERROR = 1;
         public const int TIMEOUT_ERROR = 2;
@@ -168,15 +190,9 @@ namespace WPCordovaClassLib.Cordova.Commands
         public const int PERMISSION_DENIED_ERROR = 20;
         public const int SYNTAX_ERR = 8;
 
-        public Contacts()
-        {
-
-        }
-
         // refer here for contact properties we can access: http://msdn.microsoft.com/en-us/library/microsoft.phone.tasks.savecontacttask_members%28v=VS.92%29.aspx
-        public void save(string jsonContact)
+        public void Save(string jsonContact)
         {
-
             // jsonContact is actually an array of 1 {contact}
             string[] args = JSON.JsonHelper.Deserialize<string[]>(jsonContact);
 
@@ -199,6 +215,7 @@ namespace WPCordovaClassLib.Cordova.Commands
             }
 
             #region contact.name
+
             if (contact.name != null)
             {
                 if (contact.name.givenName != null)
@@ -212,17 +229,21 @@ namespace WPCordovaClassLib.Cordova.Commands
                 if (contact.name.honorificPrefix != null)
                     contactTask.Title = contact.name.honorificPrefix;
             }
+
             #endregion
 
             #region contact.org
+
             if (contact.organizations != null && contact.organizations.Count() > 0)
             {
                 contactTask.Company = contact.organizations[0].name;
                 contactTask.JobTitle = contact.organizations[0].title;
             }
+
             #endregion
 
             #region contact.phoneNumbers
+
             if (contact.phoneNumbers != null && contact.phoneNumbers.Length > 0)
             {
                 foreach (JSONContactField field in contact.phoneNumbers)
@@ -242,15 +263,15 @@ namespace WPCordovaClassLib.Cordova.Commands
                     }
                 }
             }
+
             #endregion
 
             #region contact.emails
 
             if (contact.emails != null && contact.emails.Length > 0)
             {
-
                 // set up different email types if they are not explicitly defined
-                foreach (string type in new string[] { "personal", "work", "other" })
+                foreach (string type in new[] {"personal", "work", "other"})
                 {
                     foreach (JSONContactField field in contact.emails)
                     {
@@ -283,9 +304,9 @@ namespace WPCordovaClassLib.Cordova.Commands
                             contactTask.OtherEmail = field.value;
                         }
                     }
-
                 }
             }
+
             #endregion
 
             if (contact.note != null && contact.note.Length > 0)
@@ -294,6 +315,7 @@ namespace WPCordovaClassLib.Cordova.Commands
             }
 
             #region contact.addresses
+
             if (contact.addresses != null && contact.addresses.Length > 0)
             {
                 foreach (JSONContactAddress address in contact.addresses)
@@ -326,31 +348,33 @@ namespace WPCordovaClassLib.Cordova.Commands
                     }
                 }
             }
+
             #endregion
 
-
-            contactTask.Completed += new EventHandler<SaveContactResult>(ContactSaveTaskCompleted);
+            contactTask.Completed += ContactSaveTaskCompleted;
             contactTask.Show();
         }
 
-        void ContactSaveTaskCompleted(object sender, SaveContactResult e)
+        private void ContactSaveTaskCompleted(object sender, SaveContactResult e)
         {
             SaveContactTask task = sender as SaveContactTask;
 
             if (e.TaskResult == TaskResult.OK)
             {
-
                 Deployment.Current.Dispatcher.BeginInvoke(() =>
-                {
-                    DeviceContacts deviceContacts = new DeviceContacts();
-                    deviceContacts.SearchCompleted += new EventHandler<ContactsSearchEventArgs>(postAdd_SearchCompleted);
+                    {
+                        var deviceContacts = new DeviceContacts();
+                        deviceContacts.SearchCompleted +=
+                            postAdd_SearchCompleted;
 
-                    string displayName = String.Format("{0}{2}{1}", task.FirstName, task.LastName, String.IsNullOrEmpty(task.FirstName) ? "" : " ");
+                        if (task != null)
+                        {
+                            string displayName = String.Format("{0}{2}{1}", task.FirstName, task.LastName,
+                                                               String.IsNullOrEmpty(task.FirstName) ? "" : " ");
 
-                    deviceContacts.SearchAsync(displayName, FilterKind.DisplayName, task);
-                });
-
-
+                            deviceContacts.SearchAsync(displayName, FilterKind.DisplayName, task);
+                        }
+                    });
             }
             else if (e.TaskResult == TaskResult.Cancel)
             {
@@ -358,11 +382,11 @@ namespace WPCordovaClassLib.Cordova.Commands
             }
         }
 
-        void postAdd_SearchCompleted(object sender, ContactsSearchEventArgs e)
+        private void postAdd_SearchCompleted(object sender, ContactsSearchEventArgs e)
         {
-            if (e.Results.Count() > 0)
+            if (e.Results.Any())
             {
-                List<Contact> foundContacts = new List<Contact>();
+                new List<Contact>();
 
                 int n = (from Contact contact in e.Results select contact.GetHashCode()).Max();
                 Contact newContact = (from Contact contact in e.Results
@@ -378,14 +402,13 @@ namespace WPCordovaClassLib.Cordova.Commands
         }
 
 
-
-        public void remove(string id)
+        public void Remove(string id)
         {
             // note id is wrapped in [] and always has exactly one string ...
             DispatchCommandResult(new PluginResult(PluginResult.Status.ERROR, "{\"code\":" + NOT_SUPPORTED_ERROR + "}"));
         }
 
-        public void search(string searchCriteria)
+        public void Search(string searchCriteria)
         {
             string[] args = JSON.JsonHelper.Deserialize<string[]>(searchCriteria);
 
@@ -413,7 +436,7 @@ namespace WPCordovaClassLib.Cordova.Commands
             }
 
             DeviceContacts deviceContacts = new DeviceContacts();
-            deviceContacts.SearchCompleted += new EventHandler<ContactsSearchEventArgs>(contacts_SearchCompleted);
+            deviceContacts.SearchCompleted += contacts_SearchCompleted;
 
             // default is to search all fields
             FilterKind filterKind = FilterKind.None;
@@ -436,7 +459,6 @@ namespace WPCordovaClassLib.Cordova.Commands
 
             try
             {
-
                 deviceContacts.SearchAsync(searchParams.options.filter, filterKind, searchParams);
             }
             catch (Exception ex)
@@ -447,7 +469,7 @@ namespace WPCordovaClassLib.Cordova.Commands
 
         private void contacts_SearchCompleted(object sender, ContactsSearchEventArgs e)
         {
-            ContactSearchParams searchParams = (ContactSearchParams)e.State;
+            var searchParams = (ContactSearchParams) e.State;
 
             List<Contact> foundContacts = null;
             // used for comparing strings, ""  instantiates with InvariantCulture
@@ -464,13 +486,17 @@ namespace WPCordovaClassLib.Cordova.Commands
                 {
                     foundContacts.AddRange(from Contact con in e.Results
                                            from ContactEmailAddress a in con.EmailAddresses
-                                           where culture.CompareInfo.IndexOf(a.EmailAddress, searchParams.options.filter, compare_option) >= 0
+                                           where
+                                               culture.CompareInfo.IndexOf(a.EmailAddress, searchParams.options.filter,
+                                                                           compare_option) >= 0
                                            select con);
                 }
                 if (searchParams.fields.Contains("displayName"))
                 {
                     foundContacts.AddRange(from Contact con in e.Results
-                                           where culture.CompareInfo.IndexOf(con.DisplayName, searchParams.options.filter, compare_option) >= 0
+                                           where
+                                               culture.CompareInfo.IndexOf(con.DisplayName, searchParams.options.filter,
+                                                                           compare_option) >= 0
                                            select con);
                 }
                 if (searchParams.fields.Contains("name"))
@@ -478,28 +504,56 @@ namespace WPCordovaClassLib.Cordova.Commands
                     foundContacts.AddRange(
                         from Contact con in e.Results
                         where con.CompleteName != null && (
-                            (con.CompleteName.FirstName != null && culture.CompareInfo.IndexOf(con.CompleteName.FirstName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.LastName != null && culture.CompareInfo.IndexOf(con.CompleteName.LastName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.MiddleName != null && culture.CompareInfo.IndexOf(con.CompleteName.MiddleName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.Nickname != null && culture.CompareInfo.IndexOf(con.CompleteName.Nickname, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.Suffix != null && culture.CompareInfo.IndexOf(con.CompleteName.Suffix, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.Title != null && culture.CompareInfo.IndexOf(con.CompleteName.Title, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.YomiFirstName != null && culture.CompareInfo.IndexOf(con.CompleteName.YomiFirstName, searchParams.options.filter, compare_option) >= 0) ||
-                            (con.CompleteName.YomiLastName != null && culture.CompareInfo.IndexOf(con.CompleteName.YomiLastName, searchParams.options.filter, compare_option) >= 0))
+                                                              (con.CompleteName.FirstName != null &&
+                                                               culture.CompareInfo.IndexOf(con.CompleteName.FirstName,
+                                                                                           searchParams.options.filter,
+                                                                                           compare_option) >= 0) ||
+                                                              (con.CompleteName.LastName != null &&
+                                                               culture.CompareInfo.IndexOf(con.CompleteName.LastName,
+                                                                                           searchParams.options.filter,
+                                                                                           compare_option) >= 0) ||
+                                                              (con.CompleteName.MiddleName != null &&
+                                                               culture.CompareInfo.IndexOf(con.CompleteName.MiddleName,
+                                                                                           searchParams.options.filter,
+                                                                                           compare_option) >= 0) ||
+                                                              (con.CompleteName.Nickname != null &&
+                                                               culture.CompareInfo.IndexOf(con.CompleteName.Nickname,
+                                                                                           searchParams.options.filter,
+                                                                                           compare_option) >= 0) ||
+                                                              (con.CompleteName.Suffix != null &&
+                                                               culture.CompareInfo.IndexOf(con.CompleteName.Suffix,
+                                                                                           searchParams.options.filter,
+                                                                                           compare_option) >= 0) ||
+                                                              (con.CompleteName.Title != null &&
+                                                               culture.CompareInfo.IndexOf(con.CompleteName.Title,
+                                                                                           searchParams.options.filter,
+                                                                                           compare_option) >= 0) ||
+                                                              (con.CompleteName.YomiFirstName != null &&
+                                                               culture.CompareInfo.IndexOf(
+                                                                   con.CompleteName.YomiFirstName,
+                                                                   searchParams.options.filter, compare_option) >= 0) ||
+                                                              (con.CompleteName.YomiLastName != null &&
+                                                               culture.CompareInfo.IndexOf(
+                                                                   con.CompleteName.YomiLastName,
+                                                                   searchParams.options.filter, compare_option) >= 0))
                         select con);
                 }
                 if (searchParams.fields.Contains("phoneNumbers"))
                 {
                     foundContacts.AddRange(from Contact con in e.Results
                                            from ContactPhoneNumber a in con.PhoneNumbers
-                                           where culture.CompareInfo.IndexOf(a.PhoneNumber, searchParams.options.filter, compare_option) >= 0
+                                           where
+                                               culture.CompareInfo.IndexOf(a.PhoneNumber, searchParams.options.filter,
+                                                                           compare_option) >= 0
                                            select con);
                 }
                 if (searchParams.fields.Contains("urls"))
                 {
                     foundContacts.AddRange(from Contact con in e.Results
                                            from string a in con.Websites
-                                           where culture.CompareInfo.IndexOf(a, searchParams.options.filter, compare_option) >= 0
+                                           where
+                                               culture.CompareInfo.IndexOf(a, searchParams.options.filter,
+                                                                           compare_option) >= 0
                                            select con);
                 }
             }
@@ -515,7 +569,7 @@ namespace WPCordovaClassLib.Cordova.Commands
             foreach (Contact contact in distinctContacts)
             {
                 strResult += FormatJSONContact(contact, searchParams.options.desiredFields) + ",";
-                
+
                 if (!searchParams.options.multiple)
                 {
                     break; // just return the first item
@@ -524,28 +578,25 @@ namespace WPCordovaClassLib.Cordova.Commands
             PluginResult result = new PluginResult(PluginResult.Status.OK);
             result.Message = "[" + strResult.TrimEnd(',') + "]";
             DispatchCommandResult(result);
-            
         }
 
         private string FormatJSONContact(Contact contact, string[] desiredFields)
         {
-            var contactFieldsWithJsonVals = ContactsHelper.PopulateContactDictionary(contact);
-            if (desiredFields!=null && desiredFields.Any())
+            var contactFieldsWithJsonVals = contact.PopulateContactDictionary();
+            if (desiredFields != null && desiredFields.Any())
             {
-                return fillResultWithFields(desiredFields,contactFieldsWithJsonVals);
+                return FillResultWithFields(desiredFields, contactFieldsWithJsonVals);
             }
-            return fillResultWithFields(contactFieldsWithJsonVals.Keys.ToArray(), contactFieldsWithJsonVals);
+            return FillResultWithFields(contactFieldsWithJsonVals.Keys.ToArray(), contactFieldsWithJsonVals);
         }
 
-        private string fillResultWithFields(string[] desiredFields, Dictionary<String, String> contactFieldsWithJsonVals)
+        private string FillResultWithFields(string[] desiredFields, Dictionary<String, String> contactFieldsWithJsonVals)
         {
-            
             var result = new StringBuilder();
             for (int i = 0; i < desiredFields.Count(); i++)
             {
                 if (contactFieldsWithJsonVals.ContainsKey(desiredFields[i]))
                 {
-
                     result.Append(contactFieldsWithJsonVals[desiredFields[i]]);
                     if (i != desiredFields.Count() - 1)
                         result.Append(",");
@@ -553,6 +604,5 @@ namespace WPCordovaClassLib.Cordova.Commands
             }
             return "{" + result + "}";
         }
-
     }
 }

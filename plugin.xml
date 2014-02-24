@@ -65,6 +65,7 @@
         <source-file src="src/android/ContactAccessor.java" target-dir="src/org/apache/cordova/contacts" />
         <source-file src="src/android/ContactAccessorSdk5.java" target-dir="src/org/apache/cordova/contacts" />
         <source-file src="src/android/ContactManager.java" target-dir="src/org/apache/cordova/contacts" />
+		<source-file src="src/android/ContactInfoDTO.java" target-dir="src/org/apache/cordova/contacts" />
     </platform>
 
     <!-- amazon-fireos -->
@@ -160,6 +161,7 @@
         </config-file>
 
         <source-file src="src/wp/Contacts.cs" />
+		<source-file src="src/wp/ContactsHelper.cs" />
     </platform>
 
     <!-- wp8 -->
@@ -175,6 +177,7 @@
         </config-file>
 
         <source-file src="src/wp/Contacts.cs" />
+		<source-file src="src/wp/ContactsHelper.cs" />
     </platform>
     
     <!-- firefoxos -->
