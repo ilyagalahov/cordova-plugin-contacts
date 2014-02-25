@@ -12,7 +12,6 @@
 	limitations under the License.
 */
 
-using System.Text;
 using Microsoft.Phone.Tasks;
 using Microsoft.Phone.UserData;
 using System;
@@ -23,7 +22,6 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Windows;
 using DeviceContacts = Microsoft.Phone.UserData.Contacts;
-
 
 namespace WPCordovaClassLib.Cordova.Commands
 {
@@ -191,7 +189,7 @@ namespace WPCordovaClassLib.Cordova.Commands
         public const int SYNTAX_ERR = 8;
 
         // refer here for contact properties we can access: http://msdn.microsoft.com/en-us/library/microsoft.phone.tasks.savecontacttask_members%28v=VS.92%29.aspx
-        public void Save(string jsonContact)
+        public void save(string jsonContact)
         {
             // jsonContact is actually an array of 1 {contact}
             string[] args = JSON.JsonHelper.Deserialize<string[]>(jsonContact);
@@ -393,7 +391,7 @@ namespace WPCordovaClassLib.Cordova.Commands
                                       where contact.GetHashCode() == n
                                       select contact).First();
 
-                DispatchCommandResult(new PluginResult(PluginResult.Status.OK, FormatJSONContact(newContact, null)));
+                DispatchCommandResult(new PluginResult(PluginResult.Status.OK, newContact.ToJson(null)));
             }
             else
             {
@@ -402,13 +400,13 @@ namespace WPCordovaClassLib.Cordova.Commands
         }
 
 
-        public void Remove(string id)
+        public void remove(string id)
         {
             // note id is wrapped in [] and always has exactly one string ...
             DispatchCommandResult(new PluginResult(PluginResult.Status.ERROR, "{\"code\":" + NOT_SUPPORTED_ERROR + "}"));
         }
 
-        public void Search(string searchCriteria)
+        public void search(string searchCriteria)
         {
             string[] args = JSON.JsonHelper.Deserialize<string[]>(searchCriteria);
 
@@ -568,7 +566,7 @@ namespace WPCordovaClassLib.Cordova.Commands
 
             foreach (Contact contact in distinctContacts)
             {
-                strResult += FormatJSONContact(contact, searchParams.options.desiredFields) + ",";
+                strResult += contact.ToJson(searchParams.options.desiredFields) + ",";
 
                 if (!searchParams.options.multiple)
                 {
@@ -580,29 +578,5 @@ namespace WPCordovaClassLib.Cordova.Commands
             DispatchCommandResult(result);
         }
 
-        private string FormatJSONContact(Contact contact, string[] desiredFields)
-        {
-            var contactFieldsWithJsonVals = contact.PopulateContactDictionary();
-            if (desiredFields != null && desiredFields.Any())
-            {
-                return FillResultWithFields(desiredFields, contactFieldsWithJsonVals);
-            }
-            return FillResultWithFields(contactFieldsWithJsonVals.Keys.ToArray(), contactFieldsWithJsonVals);
-        }
-
-        private string FillResultWithFields(string[] desiredFields, Dictionary<String, String> contactFieldsWithJsonVals)
-        {
-            var result = new StringBuilder();
-            for (int i = 0; i < desiredFields.Count(); i++)
-            {
-                if (contactFieldsWithJsonVals.ContainsKey(desiredFields[i]))
-                {
-                    result.Append(contactFieldsWithJsonVals[desiredFields[i]]);
-                    if (i != desiredFields.Count() - 1)
-                        result.Append(",");
-                }
-            }
-            return "{" + result + "}";
-        }
     }
 }

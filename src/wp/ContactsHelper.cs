@@ -1,13 +1,55 @@
-﻿using System;
+﻿/*
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.Phone.UserData;
 
 namespace WPCordovaClassLib.Cordova.Commands
 {
+    /// <summary>
+    /// Implements helper functionality to serialize contact to JSON string.
+    /// </summary>
     internal static class ContactsHelper
     {
-        public static Dictionary<String, String> PopulateContactDictionary(this Contact contact)
+        public static string ToJson(this Contact contact, string[] desiredFields)
+        {
+            var contactFieldsWithJsonVals = contact.PopulateContactDictionary();
+            if (desiredFields != null && desiredFields.Any())
+            {
+                return FillResultWithFields(desiredFields, contactFieldsWithJsonVals);
+            }
+            return FillResultWithFields(contactFieldsWithJsonVals.Keys.ToArray(), contactFieldsWithJsonVals);
+        }
+
+        private static string FillResultWithFields(string[] desiredFields, Dictionary<String, String> contactFieldsWithJsonVals)
+        {
+            var result = new StringBuilder();
+            for (int i = 0; i < desiredFields.Count(); i++)
+            {
+                if (contactFieldsWithJsonVals.ContainsKey(desiredFields[i]))
+                {
+                    result.Append(contactFieldsWithJsonVals[desiredFields[i]]);
+                    if (i != desiredFields.Count() - 1)
+                        result.Append(",");
+                }
+            }
+            return "{" + result + "}";
+        }
+        private static Dictionary<String, String> PopulateContactDictionary(this Contact contact)
         {
             var contactFieldsJsonValsDictionary = new Dictionary<string, string>
                 {
@@ -18,11 +60,11 @@ namespace WPCordovaClassLib.Cordova.Commands
                         String.Format("\"nickname\":\"{0}\"",
                                       EscapeJson(contact.CompleteName != null ? contact.CompleteName.Nickname : ""))
                     },
-                    {"phoneNumbers", String.Format("\"phoneNumbers\":[{0}]", FormatJSONPhoneNumbers(contact))},
-                    {"emails", String.Format("\"emails\":[{0}]", FormatJSONEmails(contact))},
-                    {"addresses", String.Format("\"addresses\":[{0}]", FormatJSONAddresses(contact))},
-                    {"urls", String.Format("\"urls\":[{0}]", FormatJSONWebsites(contact))},
-                    {"name", String.Format("\"name\":{0}", FormatJSONName(contact))},
+                    {"phoneNumbers", String.Format("\"phoneNumbers\":[{0}]", FormatJsonPhoneNumbers(contact))},
+                    {"emails", String.Format("\"emails\":[{0}]", FormatJsonEmails(contact))},
+                    {"addresses", String.Format("\"addresses\":[{0}]", FormatJsonAddresses(contact))},
+                    {"urls", String.Format("\"urls\":[{0}]", FormatJsonWebsites(contact))},
+                    {"name", String.Format("\"name\":{0}", FormatJsonName(contact))},
                     {"note", String.Format("\"note\":\"{0}\"", EscapeJson(contact.Notes.FirstOrDefault()))},
                     {
                         "birthday", String.Format("\"birthday\":\"{0}\"",
@@ -32,7 +74,7 @@ namespace WPCordovaClassLib.Cordova.Commands
             return contactFieldsJsonValsDictionary;
         }
 
-        public static string EscapeJson(string str)
+        private static string EscapeJson(string str)
         {
             if (String.IsNullOrEmpty(str))
             {
@@ -46,7 +88,7 @@ namespace WPCordovaClassLib.Cordova.Commands
                       .Replace("&", "\\&");
         }
 
-        public static string FormatJSONPhoneNumbers(Contact con)
+        private static string FormatJsonPhoneNumbers(Contact con)
         {
             string retVal = "";
             string contactFieldFormat = "\"type\":\"{0}\",\"value\":\"{1}\",\"pref\":\"false\"";
@@ -70,7 +112,7 @@ namespace WPCordovaClassLib.Cordova.Commands
     honorificSuffix: The contacts suffix (example Esq.). (DOMString)
  */
 
-        public static string FormatJSONName(Contact con)
+        private static string FormatJsonName(Contact con)
         {
             string retVal;
             string formatStr = "\"formatted\":\"{0}\"," +
@@ -100,7 +142,7 @@ namespace WPCordovaClassLib.Cordova.Commands
             return "{" + retVal + "}";
         }
 
-        public static string FormatJSONEmails(Contact con)
+        private static string FormatJsonEmails(Contact con)
         {
             string retVal = "";
             string contactFieldFormat = "\"type\":\"{0}\",\"value\":\"{1}\",\"pref\":\"false\"";
@@ -115,19 +157,19 @@ namespace WPCordovaClassLib.Cordova.Commands
             return retVal.TrimEnd(',');
         }
 
-        public static string FormatJSONAddresses(Contact con)
+        private static string FormatJsonAddresses(Contact con)
         {
             string retVal = "";
             foreach (ContactAddress address in con.Addresses)
             {
-                retVal += GetFormattedJSONAddress(address, false) + ",";
+                retVal += GetFormattedJsonAddress(address, false) + ",";
             }
 
-            //Debug.WriteLine("FormatJSONAddresses returning :: " + retVal);
+            //Debug.WriteLine("FormatJsonAddresses returning :: " + retVal);
             return retVal.TrimEnd(',');
         }
 
-        public static string FormatJSONWebsites(Contact con)
+        private static string FormatJsonWebsites(Contact con)
         {
             string retVal = "";
             foreach (string website in con.Websites)
@@ -138,7 +180,7 @@ namespace WPCordovaClassLib.Cordova.Commands
         }
 
 
-        public static string GetFormattedJSONAddress(ContactAddress address, bool isPrefered)
+        private static string GetFormattedJsonAddress(ContactAddress address, bool isPrefered)
         {
             string addressFormatString = "\"pref\":{0}," + // bool
                                          "\"type\":\"{1}\"," +
