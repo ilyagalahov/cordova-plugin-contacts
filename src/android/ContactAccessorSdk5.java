@@ -303,225 +303,225 @@ public class ContactAccessorSdk5 extends ContactAccessor {
         }
     }
 
-	/**
-	 * Creates an array of contacts from the cursor you pass in
-	 * 
-	 * @param limit
-	 *            max number of contacts for the array
-	 * @param populate
-	 *            whether or not you should populate a certain value
-	 * @param cursor
-	 *            the cursor
-	 * @return a JSONArray of contacts
-	 */
-	private JSONArray populateContactArray(int limit,
-			HashMap<String, Boolean> populate, Cursor cursor, JSONObject options) {
+ /**
+  * Creates an array of contacts from the cursor you pass in
+  * 
+  * @param limit
+  *            max number of contacts for the array
+  * @param populate
+  *            whether or not you should populate a certain value
+  * @param cursor
+  *            the cursor
+  * @return a JSONArray of contacts
+  */
+ private JSONArray populateContactArray(int limit,
+   HashMap<String, Boolean> populate, Cursor cursor, JSONObject options) {
 
-		String contactId = "";
-		String rawId = "";
-		String oldContactId = "";
-		boolean newContact = true;
-		String mimetype = "";
-		ContactInfoDTO contactDTO = new ContactInfoDTO();
+  String contactId = "";
+  String rawId = "";
+  String oldContactId = "";
+  boolean newContact = true;
+  String mimetype = "";
+  ContactInfoDTO contactDTO = new ContactInfoDTO();
 
-		JSONArray contacts = new JSONArray();
-		JSONObject contact = new JSONObject();
+  JSONArray contacts = new JSONArray();
+  JSONObject contact = new JSONObject();
 
-		// Column indices
-		int colContactId = cursor
-				.getColumnIndex(ContactsContract.Data.CONTACT_ID);
-		int colRawContactId = cursor
-				.getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID);
-		int colMimetype = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE);
-		try {
-			while (cursor.getCount() > 0 && cursor.moveToNext()
-					&& (contacts.length() <= (limit - 1))) {
+  // Column indices
+  int colContactId = cursor
+    .getColumnIndex(ContactsContract.Data.CONTACT_ID);
+  int colRawContactId = cursor
+    .getColumnIndex(ContactsContract.Data.RAW_CONTACT_ID);
+  int colMimetype = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE);
+  try {
+   while (cursor.getCount() > 0 && cursor.moveToNext()
+     && (contacts.length() <= (limit - 1))) {
 
-				contactId = cursor.getString(colContactId);
-				rawId = cursor.getString(colRawContactId);
+    contactId = cursor.getString(colContactId);
+    rawId = cursor.getString(colRawContactId);
 
-				// If we are in the first row set the oldContactId
-				if (cursor.getPosition() == 0) {
-					oldContactId = contactId;
-				}
+    // If we are in the first row set the oldContactId
+    if (cursor.getPosition() == 0) {
+     oldContactId = contactId;
+    }
 
-				// When the contact ID changes we need to push the Contact
-				// object
-				// to the array of contacts and create new objects.
-				if (!oldContactId.equals(contactId)) {
-					// Populate the Contact object with it's arrays
-					// and push the contact into the contacts array
-					contacts.put(populateContact(contact, contactDTO));
+    // When the contact ID changes we need to push the Contact
+    // object
+    // to the array of contacts and create new objects.
+    if (!oldContactId.equals(contactId)) {
+     // Populate the Contact object with it's arrays
+     // and push the contact into the contacts array
+     contacts.put(populateContact(contact, contactDTO));
 
-					// Clean up the objects
-					contactDTO = new ContactInfoDTO();
+     // Clean up the objects
+     contactDTO = new ContactInfoDTO();
 
-					// Set newContact to true as we are starting to populate a
-					// new contact
-					newContact = true;
-				}
+     // Set newContact to true as we are starting to populate a
+     // new contact
+     newContact = true;
+    }
 
-				// When we detect a new contact set the ID and display name.
-				// These fields are available in every row in the result set
-				// returned.
-				if (newContact) {
-					newContact = false;
-					contact.put("id", contactId);
-					contact.put("rawId", rawId);
-				}
+    // When we detect a new contact set the ID and display name.
+    // These fields are available in every row in the result set
+    // returned.
+    if (newContact) {
+     newContact = false;
+     contact.put("id", contactId);
+     contact.put("rawId", rawId);
+    }
 
-				// Grab the mimetype of the current row as it will be used in a
-				// lot of comparisons
-				mimetype = cursor.getString(colMimetype);
-				contactDTO = fillContactDTO(mimetype, cursor, populate,
-						contactId, options);
+    // Grab the mimetype of the current row as it will be used in a
+    // lot of comparisons
+    mimetype = cursor.getString(colMimetype);
+    contactDTO = fillContactDTO(mimetype, cursor, populate,
+      contactId, options);
 
-				// Set the old contact ID
-				oldContactId = contactId;
-			}
+    // Set the old contact ID
+    oldContactId = contactId;
+   }
 
-		} catch (JSONException e) {
-			Log.e(LOG_TAG, e.getMessage(), e);
-		}
+  } catch (JSONException e) {
+   Log.e(LOG_TAG, e.getMessage(), e);
+  }
 
-		// Push the last contact into the contacts array
-		if (contacts.length() < limit) {
-			contacts.put(populateContact(contact, contactDTO));
-		}
-		cursor.close();
-		return contacts;
-	}
+  // Push the last contact into the contacts array
+  if (contacts.length() < limit) {
+   contacts.put(populateContact(contact, contactDTO));
+  }
+  cursor.close();
+  return contacts;
+ }
     
-	/**
-	 * Fills contact DTO from cursor
-	 * 
-	 * @param mimetype
-	 *            mimetype of the current row
-	 * @param cursor
-	 *            the cursor
-	 * @param populate
-	 *            whether or not you should populate a certain value
-	 * @param contactId
-	 *            contact id
-	 * @param options
-	 *            options from client
-	 * @return filled dto
-	 */
-	private ContactInfoDTO fillContactDTO(String mimetype, Cursor cursor,
-			HashMap<String, Boolean> populate, String contactId,
-			JSONObject options) {
-		int colDisplayName = cursor
-				.getColumnIndex(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME);
-		int colNote = cursor
-				.getColumnIndex(ContactsContract.CommonDataKinds.Note.NOTE);
-		int colNickname = cursor
-				.getColumnIndex(ContactsContract.CommonDataKinds.Nickname.NAME);
-		int colBirthday = cursor
-				.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE);
-		int colEventType = cursor
-				.getColumnIndex(ContactsContract.CommonDataKinds.Event.TYPE);
+ /**
+  * Fills contact DTO from cursor
+  * 
+  * @param mimetype
+  *            mimetype of the current row
+  * @param cursor
+  *            the cursor
+  * @param populate
+  *            whether or not you should populate a certain value
+  * @param contactId
+  *            contact id
+  * @param options
+  *            options from client
+  * @return filled dto
+  */
+ private ContactInfoDTO fillContactDTO(String mimetype, Cursor cursor,
+   HashMap<String, Boolean> populate, String contactId,
+   JSONObject options) {
+  int colDisplayName = cursor
+    .getColumnIndex(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME);
+  int colNote = cursor
+    .getColumnIndex(ContactsContract.CommonDataKinds.Note.NOTE);
+  int colNickname = cursor
+    .getColumnIndex(ContactsContract.CommonDataKinds.Nickname.NAME);
+  int colBirthday = cursor
+    .getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE);
+  int colEventType = cursor
+    .getColumnIndex(ContactsContract.CommonDataKinds.Event.TYPE);
 
-		ContactInfoDTO dto = new ContactInfoDTO();
-		if (mimetype
-				.equals(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)) {
-			dto.displayName = cursor.getString(colDisplayName);
+  ContactInfoDTO dto = new ContactInfoDTO();
+  if (mimetype
+    .equals(ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)) {
+   dto.displayName = cursor.getString(colDisplayName);
 
-			if (isRequired("name", populate))
-				dto.name = nameQuery(cursor);
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-				&& isRequired("phoneNumbers", populate)) {
-			dto.phones.put(phoneQuery(cursor));
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
-				&& isRequired("emails", populate)) {
-			dto.emails.put(emailQuery(cursor));
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE)
-				&& isRequired("addresses", populate)) {
-			dto.addresses.put(addressQuery(cursor));
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
-				&& isRequired("organizations", populate)) {
-			dto.organizations.put(organizationQuery(cursor));
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
-				&& isRequired("ims", populate)) {
-			dto.ims.put(imQuery(cursor));
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
-				&& isRequired("note", populate)) {
-			dto.note = cursor.getString(colNote);
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Nickname.CONTENT_ITEM_TYPE)
-				&& isRequired("nickname", populate)) {
-			dto.nickname = cursor.getString(colNickname);
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)
-				&& isRequired("urls", populate)) {
-			dto.websites.put(websiteQuery(cursor));
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)) {
-			if (isRequired("birthday", populate)
-					&& ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY == cursor
-							.getInt(colEventType)) {
-				dto.birthday = cursor.getString(colBirthday);
-			}
-		} else if (mimetype
-				.equals(ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
-				&& isRequired("photos", populate)) {
-			dto.photos.put(photoQuery(cursor, contactId));
-		}
+   if (isRequired("name", populate))
+    dto.name = nameQuery(cursor);
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+    && isRequired("phoneNumbers", populate)) {
+   dto.phones.put(phoneQuery(cursor));
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
+    && isRequired("emails", populate)) {
+   dto.emails.put(emailQuery(cursor));
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.StructuredPostal.CONTENT_ITEM_TYPE)
+    && isRequired("addresses", populate)) {
+   dto.addresses.put(addressQuery(cursor));
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Organization.CONTENT_ITEM_TYPE)
+    && isRequired("organizations", populate)) {
+   dto.organizations.put(organizationQuery(cursor));
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Im.CONTENT_ITEM_TYPE)
+    && isRequired("ims", populate)) {
+   dto.ims.put(imQuery(cursor));
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE)
+    && isRequired("note", populate)) {
+   dto.note = cursor.getString(colNote);
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Nickname.CONTENT_ITEM_TYPE)
+    && isRequired("nickname", populate)) {
+   dto.nickname = cursor.getString(colNickname);
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Website.CONTENT_ITEM_TYPE)
+    && isRequired("urls", populate)) {
+   dto.websites.put(websiteQuery(cursor));
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Event.CONTENT_ITEM_TYPE)) {
+   if (isRequired("birthday", populate)
+     && ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY == cursor
+       .getInt(colEventType)) {
+    dto.birthday = cursor.getString(colBirthday);
+   }
+  } else if (mimetype
+    .equals(ContactsContract.CommonDataKinds.Photo.CONTENT_ITEM_TYPE)
+    && isRequired("photos", populate)) {
+   dto.photos.put(photoQuery(cursor, contactId));
+  }
 
-		fillDesiredFields(dto, options);
-		return dto;
-	}
+  fillDesiredFields(dto, options);
+  return dto;
+ }
     
-	/**
-	 * Fills desired fields with values map
-	 * 
-	 * @param dto
-	 * @param options
-	 */
-	private void fillDesiredFields(ContactInfoDTO dto, JSONObject options) {
-		ArrayList<String> desiredFields = new ArrayList<String>();
-		if (options.has("desiredFields")) {
-			try {
-				JSONArray desiredFieldsJson = options
-						.getJSONArray("desiredFields");
-				for (int i = 0; i < desiredFieldsJson.length(); i++) {
-					desiredFields.add(desiredFieldsJson.get(i).toString());
-				}
+ /**
+  * Fills desired fields with values map
+  * 
+  * @param dto
+  * @param options
+  */
+ private void fillDesiredFields(ContactInfoDTO dto, JSONObject options) {
+  ArrayList<String> desiredFields = new ArrayList<String>();
+  if (options.has("desiredFields")) {
+   try {
+    JSONArray desiredFieldsJson = options
+      .getJSONArray("desiredFields");
+    for (int i = 0; i < desiredFieldsJson.length(); i++) {
+     desiredFields.add(desiredFieldsJson.get(i).toString());
+    }
 
-			} catch (JSONException e) {
-				Log.e(LOG_TAG, e.getMessage(), e);
-			}
-		}
-		if (desiredFields.contains("displayName"))
-			dto.desiredFieldsWithVals.put("displayName", dto.displayName);
-		if (desiredFields.contains("name"))
-			dto.desiredFieldsWithVals.put("name", dto.name);
-		if (desiredFields.contains("phoneNumbers"))
-			dto.desiredFieldsWithVals.put("phoneNumbers", dto.phones);
-		if (desiredFields.contains("emails"))
-			dto.desiredFieldsWithVals.put("emails", dto.emails);
-		if (desiredFields.contains("addresses"))
-			dto.desiredFieldsWithVals.put("addresses", dto.addresses);
-		if (desiredFields.contains("organizations"))
-			dto.desiredFieldsWithVals.put("organizations", dto.organizations);
-		if (desiredFields.contains("ims"))
-			dto.desiredFieldsWithVals.put("ims", dto.ims);
-		if (desiredFields.contains("note"))
-			dto.desiredFieldsWithVals.put("note", dto.note);
-		if (desiredFields.contains("nickname"))
-			dto.desiredFieldsWithVals.put("nickname", dto.nickname);
-		if (desiredFields.contains("urls"))
-			dto.desiredFieldsWithVals.put("urls", dto.websites);
-		if (desiredFields.contains("birthday"))
-			dto.desiredFieldsWithVals.put("birthday", dto.displayName);
-		if (desiredFields.contains("photos"))
-			dto.desiredFieldsWithVals.put("photos", dto.photos);
-	}
+   } catch (JSONException e) {
+    Log.e(LOG_TAG, e.getMessage(), e);
+   }
+  }
+  if (desiredFields.contains("displayName"))
+   dto.desiredFieldsWithVals.put("displayName", dto.displayName);
+  if (desiredFields.contains("name"))
+   dto.desiredFieldsWithVals.put("name", dto.name);
+  if (desiredFields.contains("phoneNumbers"))
+   dto.desiredFieldsWithVals.put("phoneNumbers", dto.phones);
+  if (desiredFields.contains("emails"))
+   dto.desiredFieldsWithVals.put("emails", dto.emails);
+  if (desiredFields.contains("addresses"))
+   dto.desiredFieldsWithVals.put("addresses", dto.addresses);
+  if (desiredFields.contains("organizations"))
+   dto.desiredFieldsWithVals.put("organizations", dto.organizations);
+  if (desiredFields.contains("ims"))
+   dto.desiredFieldsWithVals.put("ims", dto.ims);
+  if (desiredFields.contains("note"))
+   dto.desiredFieldsWithVals.put("note", dto.note);
+  if (desiredFields.contains("nickname"))
+   dto.desiredFieldsWithVals.put("nickname", dto.nickname);
+  if (desiredFields.contains("urls"))
+   dto.desiredFieldsWithVals.put("urls", dto.websites);
+  if (desiredFields.contains("birthday"))
+   dto.desiredFieldsWithVals.put("birthday", dto.displayName);
+  if (desiredFields.contains("photos"))
+   dto.desiredFieldsWithVals.put("photos", dto.photos);
+ }
 
     /**
      * Builds a where clause all all the ids passed into the method
@@ -564,52 +564,52 @@ public class ContactAccessorSdk5 extends ContactAccessor {
      * @param filled contact DTO
      * @return
      */
-	private JSONObject populateContact(JSONObject contact,
-			ContactInfoDTO contactDTO) {
-		try {
-			// Only return the array if it has at least one entry
+ private JSONObject populateContact(JSONObject contact,
+   ContactInfoDTO contactDTO) {
+  try {
+   // Only return the array if it has at least one entry
 
-			if (contactDTO.desiredFieldsWithVals.size() > 0)
-				for (String desiredField : contactDTO.desiredFieldsWithVals
-						.keySet()) {
-					contact.put(desiredField,
-							contactDTO.desiredFieldsWithVals.get(desiredField));
-				}
-			else {
-				contact.put("displayName", contactDTO.displayName);
-				contact.put("name", contactDTO.name);
-				contact.put("note", contactDTO.note);
-				contact.put("nickname", contactDTO.nickname);
-				contact.put("birthday", contactDTO.birthday);
+   if (contactDTO.desiredFieldsWithVals.size() > 0)
+    for (String desiredField : contactDTO.desiredFieldsWithVals
+      .keySet()) {
+     contact.put(desiredField,
+       contactDTO.desiredFieldsWithVals.get(desiredField));
+    }
+   else {
+    contact.put("displayName", contactDTO.displayName);
+    contact.put("name", contactDTO.name);
+    contact.put("note", contactDTO.note);
+    contact.put("nickname", contactDTO.nickname);
+    contact.put("birthday", contactDTO.birthday);
 
-				if (contactDTO.organizations.length() > 0) {
-					contact.put("organizations", contactDTO.organizations);
-				}
-				if (contactDTO.addresses.length() > 0) {
-					contact.put("addresses", contactDTO.addresses);
-				}
-				if (contactDTO.phones.length() > 0) {
-					contact.put("phoneNumbers", contactDTO.phones);
-				}
-				if (contactDTO.emails.length() > 0) {
-					contact.put("emails", contactDTO.emails);
-				}
-				if (contactDTO.ims.length() > 0) {
-					contact.put("ims", contactDTO.ims);
-				}
-				if (contactDTO.websites.length() > 0) {
-					contact.put("urls", contactDTO.websites);
-				}
-				if (contactDTO.photos.length() > 0) {
-					contact.put("photos", contactDTO.photos);
-				}
+    if (contactDTO.organizations.length() > 0) {
+     contact.put("organizations", contactDTO.organizations);
+    }
+    if (contactDTO.addresses.length() > 0) {
+     contact.put("addresses", contactDTO.addresses);
+    }
+    if (contactDTO.phones.length() > 0) {
+     contact.put("phoneNumbers", contactDTO.phones);
+    }
+    if (contactDTO.emails.length() > 0) {
+     contact.put("emails", contactDTO.emails);
+    }
+    if (contactDTO.ims.length() > 0) {
+     contact.put("ims", contactDTO.ims);
+    }
+    if (contactDTO.websites.length() > 0) {
+     contact.put("urls", contactDTO.websites);
+    }
+    if (contactDTO.photos.length() > 0) {
+     contact.put("photos", contactDTO.photos);
+    }
 
-			}
-		} catch (JSONException e) {
-			Log.e(LOG_TAG, e.getMessage(), e);
-		}
-		return contact;
-	}
+   }
+  } catch (JSONException e) {
+   Log.e(LOG_TAG, e.getMessage(), e);
+  }
+  return contact;
+ }
 
   /**
    * Take the search criteria passed into the method and create a SQL WHERE clause.
@@ -1178,8 +1178,8 @@ public class ContactAccessorSdk5 extends ContactAccessor {
                         }
                         // This is an existing email so do a DB update
                         else {
-                        	String emailValue=getJsonString(email, "value");
-                        	if(!emailValue.isEmpty()) {
+                         String emailValue=getJsonString(email, "value");
+                         if(!emailValue.isEmpty()) {
                                 ops.add(ContentProviderOperation.newUpdate(ContactsContract.Data.CONTENT_URI)
                                     .withSelection(ContactsContract.CommonDataKinds.Email._ID + "=? AND " +
                                             ContactsContract.Data.MIMETYPE + "=?",
@@ -1187,13 +1187,13 @@ public class ContactAccessorSdk5 extends ContactAccessor {
                                     .withValue(ContactsContract.CommonDataKinds.Email.DATA, getJsonString(email, "value"))
                                     .withValue(ContactsContract.CommonDataKinds.Email.TYPE, getContactType(getJsonString(email, "type")))
                                     .build());
-                        	} else {
+                         } else {
                                 ops.add(ContentProviderOperation.newDelete(ContactsContract.Data.CONTENT_URI)
                                         .withSelection(ContactsContract.CommonDataKinds.Email._ID + "=? AND " +
                                                 ContactsContract.Data.MIMETYPE + "=?",
                                                 new String[] { emailId, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE })
                                         .build());
-                        	}
+                         }
                         }
                     }
                 }
