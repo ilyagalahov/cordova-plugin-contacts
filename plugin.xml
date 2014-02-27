@@ -178,6 +178,9 @@
 
         <source-file src="src/wp/Contacts.cs" />
 		<source-file src="src/wp/ContactsHelper.cs" />
+		<source-file src="src/wp/ContactPicker.xaml" />
+		<source-file src="src/wp/ContactPicker.xaml.cs" />
+		<source-file src="src/wp/ContactPickerTask.cs" />
     </platform>
     
     <!-- firefoxos -->
