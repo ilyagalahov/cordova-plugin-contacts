@@ -1,4 +1,4 @@
-/*
+cordova.define("org.apache.cordova.contacts.contacts", function(require, exports, module) { /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -53,6 +53,22 @@ var contacts = {
             exec(win, errorCB, "Contacts", "search", [fields, options]);
         }
     },
+    
+    /**
+     * This function picks contact from phone using contact picker UI
+     * @returns new Contact object
+     */
+    pick: function (successCB, errorCB, options) {
+        argscheck.checkArgs('fFO', 'contacts.pick', arguments);
+        var win = function (result) {
+            var cs = [];
+            for (var i = 0, l = result.length; i < l; i++) {
+                cs.push(contacts.create(result[i]));
+            }
+            successCB(cs);
+        };
+        exec(win, errorCB, "Contacts", "pick", [options]);
+    },
 
     /**
      * This function creates a new contact, but it does not persist the contact
@@ -74,3 +90,5 @@ var contacts = {
 };
 
 module.exports = contacts;
+
+});
