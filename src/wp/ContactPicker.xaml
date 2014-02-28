@@ -31,67 +31,39 @@
 
     <Grid x:Name="ContentRoot" Background="Transparent">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <phone:LongListSelector Margin="0,-38,-22,2" Name="lstWebsites" SelectionChanged="LLS_SelectionChanged">
+        <phone:LongListSelector Margin="0,-38,-22,2" Name="lstContacts" SelectionChanged="LLS_SelectionChanged">
             <phone:LongListSelector.ListHeaderTemplate>
                 <DataTemplate>
                     <Grid Margin="12,0,0,38">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <TextBlock Text="Contacts"
-                                          
-                                           Grid.Row="0"/>
+
+                                   Grid.Row="0" />
                     </Grid>
                 </DataTemplate>
             </phone:LongListSelector.ListHeaderTemplate>
             <phone:LongListSelector.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal" Margin="12,2,0,4" Height="105" Width="432">
-                        <!--Replace rectangle with image-->
-                        <Border BorderThickness="1" Width="99" Height="99" BorderBrush="{StaticResource PhoneAccentBrush}" Background="{StaticResource PhoneAccentBrush}"/>
+                        <Border BorderThickness="1" Width="99" Height="99"
+                                BorderBrush="{StaticResource PhoneAccentBrush}"
+                                Background="{StaticResource PhoneAccentBrush}" />
                         <StackPanel Width="311" Margin="8,-7,0,0">
-                            <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" Margin="10,0" Style="{StaticResource PhoneTextExtraLargeStyle}" FontSize="{StaticResource PhoneFontSizeLarge}" />
-                            <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" Margin="10,-2,10,0" Style="{StaticResource PhoneTextSubtleStyle}" />
+                            <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" Margin="10,0"
+                                       Style="{StaticResource PhoneTextExtraLargeStyle}"
+                                       FontSize="{StaticResource PhoneFontSizeLarge}" />
+                            <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" Margin="10,-2,10,0"
+                                       Style="{StaticResource PhoneTextSubtleStyle}" />
                         </StackPanel>
                     </StackPanel>
                 </DataTemplate>
             </phone:LongListSelector.ItemTemplate>
         </phone:LongListSelector>
-        <!--<phone:LongListSelector Name="lstWebsites" SelectionChanged="LLS_SelectionChanged">
-            <phone:LongListSelector.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="0,6,0,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Rectangle Fill="Gray" Height="50" Width="50" Grid.Row="0" Grid.Column="0"
-                                   VerticalAlignment="Top" Margin="0,7,7,0">
-                        </Rectangle>
-                        <TextBlock Text="{Binding DisplayName}" Grid.Row="0" Grid.Column="1"
-                                   Foreground="{StaticResource PhoneAccentBrush}" VerticalAlignment="Top" />
-
-                    </Grid>
-                </DataTemplate>
-            </phone:LongListSelector.ItemTemplate>
-        </phone:LongListSelector>-->
     </Grid>
-
-    <phone:PhoneApplicationPage.ApplicationBar>
-        <shell:ApplicationBar IsVisible="True" IsMenuEnabled="True" x:Name="PhoneAppBar" Opacity="0.0">
-
-
-            <!--<shell:ApplicationBarIconButton IconUri="/Images/appbar.feature.video.rest.png" Text="Record"  x:Name="btnStartRecording" Click="StartRecording_Click" />
-            <shell:ApplicationBarIconButton IconUri="/Images/appbar.save.rest.png" Text="Take" x:Name="btnTakeVideo" Click="TakeVideo_Click"/>-->
-        </shell:ApplicationBar>
-    </phone:PhoneApplicationPage.ApplicationBar>
-
 </phone:PhoneApplicationPage>

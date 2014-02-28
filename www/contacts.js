@@ -58,8 +58,8 @@ var contacts = {
      * This function picks contact from phone using contact picker UI
      * @returns new Contact object
      */
-    pick: function (successCB, errorCB, options) {
-        argscheck.checkArgs('fFO', 'contacts.pick', arguments);
+    pick: function (desiredFields,successCB, errorCB) {
+        argscheck.checkArgs('afF', 'contacts.pick', arguments);
         var win = function (result) {
             var cs = [];
             for (var i = 0, l = result.length; i < l; i++) {
@@ -67,7 +67,7 @@ var contacts = {
             }
             successCB(cs);
         };
-        exec(win, errorCB, "Contacts", "pick", [options]);
+        exec(win, errorCB, "Contacts", "pick", [desiredFields]);
     },
 
     /**

@@ -410,17 +410,22 @@ namespace WPCordovaClassLib.Cordova.Commands
         {
             string[] args = JSON.JsonHelper.Deserialize<string[]>(arguments);
             var task = new ContactPickerTask();
-            var options = JSON.JsonHelper.Deserialize<SearchOptions>(args[0]);
-
+            var desiredFields = JSON.JsonHelper.Deserialize<string[]>(args[0]);
 
             task.Completed += delegate(Object sender, ContactPickerTask.PickResult e)
                 {
                     if (e.TaskResult == TaskResult.OK)
                     {
-                        String strResult = e.Contact.ToJson(options.desiredFields);
-                        var result = new PluginResult(PluginResult.Status.OK);
-                        result.Message = "[" + strResult.TrimEnd(',') + "]";
+                        String strResult = e.Contact.ToJson(desiredFields);
+                        var result = new PluginResult(PluginResult.Status.OK)
+                            {
+                                Message = "[" + strResult.TrimEnd(',') + "]"
+                            };
                         DispatchCommandResult(result);
+                    }
+                    if (e.TaskResult == TaskResult.Cancel)
+                    {
+                        DispatchCommandResult(new PluginResult(PluginResult.Status.ERROR, "Operation cancelled."));
                     }
                 };
 

@@ -15,6 +15,7 @@
 using System;
 using System.Linq;
 using System.Windows.Controls;
+using System.Windows.Navigation;
 using Microsoft.Phone.Tasks;
 using Microsoft.Phone.UserData;
 using DeviceContacts = Microsoft.Phone.UserData.Contacts;
@@ -36,6 +37,8 @@ namespace WPCordovaClassLib.Cordova.Commands
 
         #region Fields
 
+        private ContactPickerTask.PickResult _result;
+
         #endregion
 
         /// <summary>
@@ -45,31 +48,31 @@ namespace WPCordovaClassLib.Cordova.Commands
         {
             InitializeComponent();
             var cons = new DeviceContacts();
-            cons.SearchCompleted += Contacts_SearchCompleted;
-            cons.SearchAsync(String.Empty, FilterKind.None, "Contacts Test #1");
-        }
-
-        private void Contacts_SearchCompleted(object sender, ContactsSearchEventArgs e)
-        {
-            lstWebsites.ItemsSource = e.Results.ToList();
+            cons.SearchCompleted +=
+                (sender, e) => { lstContacts.ItemsSource = e.Results.ToList(); }
+                ;
+            cons.SearchAsync(String.Empty, FilterKind.None, "");
         }
 
         private void LLS_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ContactPickerTask.PickResult result = new ContactPickerTask.PickResult(TaskResult.OK);
-            result.Contact = e.AddedItems[0] as Contact;
-            Completed(this, result);
+            _result = new ContactPickerTask.PickResult(TaskResult.OK);
+            _result.Contact = e.AddedItems[0] as Contact;
+            Completed(this, _result);
 
             if (NavigationService.CanGoBack)
             {
                 NavigationService.GoBack();
             }
         }
-
-        public class ContactInfo
+        
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            public string Name { get; set; }
-            public string Id { get; set; }
+            if (_result == null)
+            {
+                Completed(this, new ContactPickerTask.PickResult(TaskResult.Cancel));
+            }
+            base.OnNavigatedFrom(e);
         }
     }
 }
